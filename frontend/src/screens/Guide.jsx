@@ -174,7 +174,7 @@ export default function Guide() {
           <li>Double-click <code>start.cmd</code> — done!</li>
         </ol>
         <div className="warn" style={{ background: '#fef9e7', borderLeft: '3px solid #f59e0b', padding: '10px 14px', borderRadius: '0 6px 6px 0', marginTop: 10, fontSize: 13 }}>
-          <b>Default credentials:</b> Username: <code>admin</code>, Password: <code>skretting@nutreco.com</code>. Change the password after first login.
+          <b>Default credentials:</b> Username: <code>admin</code>, Password: <code>admin@omar.com</code>. Change the password after first login.
         </div>
         <h3 style={{ marginTop: 12 }}>Fresh start</h3>
         <p>For a clean installation: copy only <code>app/</code>, <code>electron/</code>, <code>runtime/</code>, and <code>start.cmd</code>. Skip <code>backend/data/</code>. A fresh database is created on first launch.</p>
