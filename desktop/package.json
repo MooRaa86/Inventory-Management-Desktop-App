@@ -1,0 +1,15 @@
+{
+  "name": "inventory-manager-desktop",
+  "productName": "Inventory Manager",
+  "version": "1.0.0",
+  "description": "Offline warehouse inventory management - desktop shell",
+  "main": "main.js",
+  "author": "Company",
+  "license": "PROPRIETARY",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inventory Manager — Deployment Guide</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.6; padding: 30px 40px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 26px; color: #1e3a5f; border-bottom: 3px solid #1e3a5f; padding-bottom: 10px; margin-bottom: 6px; }
+  .subtitle { color: #666; font-size: 13px; margin-bottom: 28px; }
+  h2 { font-size: 18px; color: #1e3a5f; margin: 26px 0 10px 0; border-left: 4px solid #3b82f6; padding-left: 10px; }
+  h3 { font-size: 15px; color: #333; margin: 16px 0 6px 0; }
+  p { margin: 6px 0; font-size: 13.5px; }
+  ul, ol { margin: 6px 0 6px 22px; font-size: 13.5px; }
+  li { margin: 3px 0; }
+  pre { background: #f4f6f8; border: 1px solid #d1d5db; border-radius: 6px; padding: 14px 16px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12.5px; line-height: 1.5; overflow-x: auto; margin: 8px 0; white-space: pre; }
+  code { background: #f0f2f5; padding: 1px 5px; border-radius: 3px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12.5px; }
+  .note { background: #eef6ff; border-left: 4px solid #3b82f6; padding: 12px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
+  .warn { background: #fef9e7; border-left: 4px solid #f59e0b; padding: 12px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
+  .step { background: #f8f9fa; border: 1px solid #e2e5e9; border-radius: 6px; padding: 14px 16px; margin: 10px 0; }
+  .step-num { display: inline-block; background: #1e3a5f; color: #fff; width: 26px; height: 26px; border-radius: 50%; text-align: center; line-height: 26px; font-size: 13px; font-weight: bold; margin-right: 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: left; }
+  th { background: #1e3a5f; color: #fff; font-weight: 600; }
+  tr:nth-child(even) { background: #f8f9fa; }
+  .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #d1d5db; font-size: 11px; color: #888; text-align: center; }
+  @media print {
+    body { padding: 0; }
+    .no-print { display: none; }
+    .page-break { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Inventory Manager</h1>
+<p class="subtitle">Deployment Guide &mdash; Folder Structure, Database Location &amp; Migration to Another PC</p>
+
+<h2>1. Folder Structure</h2>
+<p>The entire application lives in a single portable folder. Here is the complete layout:</p>
+
+<pre>InventoryManager/
+|
+|-- start.cmd                    ← Double-click to launch the app
+|
+|-- app/
+|   |-- main.js                  ← Electron shell (desktop wrapper)
+|   |-- preload.js               ← Electron preload script
+|   +-- package.json             ← Electron configuration
+|
+|-- electron/                    ← Electron binaries (do not modify)
+|
+|-- runtime/                     ← Bundled Java runtime (no Java installed on PC)
+|   |-- bin/
+|   |-- lib/
+|   +-- ...
+|
++-- backend/
+    |-- inventory-backend.jar    ← The application server
+    |
+    |-- config/
+    |   |-- jwt-secret.key       ← Authentication token key
+    |   +-- initial-admin-credentials.txt  ← First admin password
+    |
+    |-- data/
+    |   +-- inventory.db         ← ★ YOUR DATABASE (all products, stock, etc.)
+    |
+    |-- backups/
+    |   |-- manual/              ← Your manual backups
+    |   |-- automatic/           ← Scheduled backups
+    |   +-- safety/              ← Auto-created before each restore
+    |
+    |-- exports/
+    |   +-- reports/             ← Generated report files (CSV, XLSX, PDF)
+    |
+    +-- logs/
+        +-- application.log      ← Application log file</pre>
+
+<h2>2. Where Is the Database?</h2>
+<p>Your entire database &mdash; all products, stock movements, purchases, issues, users, settings, and audit logs &mdash; is stored in a single SQLite file:</p>
+<div class="note">
+    <strong>Location:</strong> <code>InventoryManager/backend/data/inventory.db</code><br>
+    This is the <strong>only file</strong> you need to worry about. Everything else is the application itself.
+</div>
+
+<h2>3. Moving to Another PC</h2>
+<p>The application is fully portable. No installation is required on the target machine.</p>
+
+<h3>Prerequisites</h3>
+<ul>
+    <li>Windows 10 or later (64-bit)</li>
+    <li>No Java, Node.js, or any other software needs to be installed</li>
+</ul>
+
+<h3>Step-by-Step</h3>
+
+<div class="step">
+    <span class="step-num">1</span> <strong>Close the application</strong> on the current PC (close the window).
+</div>
+
+<div class="step">
+    <span class="step-num">2</span> <strong>Copy the entire <code>InventoryManager</code> folder</code></strong> to a USB drive, shared network folder, or any transfer method you prefer.<br>
+    <em>Example:</em> Copy <code>D:\InventoryManager</code> &rarr; <code>E:\InventoryManager</code> (USB drive)
+</div>
+
+<div class="step">
+    <span class="step-num">3</span> <strong>Paste the folder</strong> on the new PC (e.g., <code>C:\InventoryManager</code>).
+</div>
+
+<div class="step">
+    <span class="step-num">4</span> <strong>Double-click <code>start.cmd</code></strong> to launch the application.
+</div>
+
+<div class="step">
+    <span class="step-num">5</span> The browser will open automatically. Log in with the default credentials:<br>
+    <strong>Username:</strong> <code>admin</code><br>
+    <strong>Password:</strong> <code>skretting@nutreco.com</code>
+</div>
+
+<div class="note">
+    <strong>Note:</strong> These default credentials are the same on every installation. For security, change the admin password after first login (go to Settings → Change Password).
+</div>
+
+<h2>4. Fresh Start (Optional)</h2>
+<p>If you want a clean installation on the new PC with no data from the old one:</p>
+<ol>
+    <li>Copy only the <code>app/</code>, <code>electron/</code>, <code>runtime/</code>, and <code>start.cmd</code> files</li>
+    <li>Do <strong>not</strong> copy the <code>backend/data/</code> folder</li>
+    <li>On first launch, a fresh empty database will be created automatically</li>
+</ol>
+
+<h2>5. Backing Up Your Data</h2>
+<p>You can create backups from within the application:</p>
+<ol>
+    <li>Go to <strong>Backups</strong> in the sidebar</li>
+    <li>Click <strong>Create backup</strong></li>
+    <li>Click <strong>Download</strong> to save the backup zip to your computer</li>
+</ol>
+<p>A backup contains everything: database, settings, and metadata. You can restore it on any installation of the same application.</p>
+
+<div class="page-break"></div>
+
+<h2>6. What Stays &amp; What Moves</h2>
+<table>
+    <tr><th>Item</th><th>Location</th><th>Moves with folder?</th></tr>
+    <tr><td>All data (products, stock, etc.)</td><td><code>backend/data/inventory.db</code></td><td>Yes</td></tr>
+    <tr><td>Admin credentials</td><td><code>backend/config/initial-admin-credentials.txt</code></td><td>Yes</td></tr>
+    <tr><td>JWT auth key</td><td><code>backend/config/jwt-secret.key</code></td><td>Yes (existing logins will break)</td></tr>
+    <tr><td>Manual backups</td><td><code>backend/backups/manual/</code></td><td>Yes</td></tr>
+    <tr><td>Automatic backups</td><td><code>backend/backups/automatic/</code></td><td>Yes</td></tr>
+    <tr><td>Application code</td><td><code>app/</code>, <code>electron/</code>, <code>runtime/</code></td><td>Yes</td></tr>
+    <tr><td>Reports (generated)</td><td><code>backend/exports/reports/</code></td><td>Yes</td></tr>
+    <tr><td>Logs</td><td><code>backend/logs/</code></td><td>Yes</td></tr>
+</table>
+
+<h2>7. Troubleshooting</h2>
+<table>
+    <tr><th>Problem</th><th>Solution</th></tr>
+    <tr><td><code>start.cmd</code> opens and closes immediately</td><td>Check if another instance is running (close it first). Or check <code>backend/logs/application.log</code> for errors.</td></tr>
+    <tr><td>Port 8475 already in use</td><td>Another instance is running. Close it or restart the PC.</td></tr>
+    <tr><td>"Access denied" on <code>start.cmd</code></td><td>Right-click &rarr; Run as Administrator, or move the folder to <code>C:\</code> or <code>D:\</code> (not Desktop or Downloads).</td></tr>
+    <tr><td>Database is empty after moving</td><td>You may have copied without the <code>data/</code> folder. Copy the full <code>backend/data/</code> folder.</td></tr>
+    <tr><td>Windows SmartScreen warning</td><td>Click "More info" &rarr; "Run anyway". This is normal for unsigned apps.</td></tr>
+</table>
+
+<h2>8. File Size</h2>
+<p>The full portable folder is approximately <strong>350&ndash;400 MB</strong>. This includes the Electron desktop shell, bundled Java runtime, and the application server.</p>
+
+<div class="footer">
+    Inventory Manager &mdash; Deployment Guide &mdash; Generated August 2026
+</div>
+
+</body>
+</html>
