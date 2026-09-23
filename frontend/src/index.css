@@ -26,6 +26,8 @@ h2.page-title { margin:0 0 16px; font-size:20px; }
 .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
 .toolbar input, .toolbar select { margin:0; }
 .spacer { flex:1; }
+.tab { background:transparent; border:1px solid transparent; color:var(--muted); padding:7px 14px; border-radius:8px; font-weight:600; }
+.tab.active { background:var(--accent); color:#fff; }
 
 input, select, textarea {
   padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:13.5px;
@@ -85,3 +87,14 @@ table.grid tr:hover td { background:#f8fafc; }
 
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .kv { font-size:13px; margin:3px 0; } .kv b { display:inline-block; min-width:120px; color:var(--muted); font-weight:500; }
+
+.login-logo { height:64px; object-fit:contain; margin:0 auto 12px; display:block; }
+.linklike { background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; padding:0; font-family:inherit; }
+.linklike:hover { text-decoration:underline; background:none; color:var(--accent-dark); }
+.info-banner { background:#e3edfb; color:var(--accent-dark); border:1px solid #c4d8f4; padding:9px 12px; border-radius:6px; margin-bottom:12px; font-size:13px; line-height:1.5; }
+.chip { background:#eef2f6; color:var(--muted); border-radius:12px; padding:3px 10px; font-size:12px; font-weight:600; }
+table.grid tfoot td.summary-row { background:#ecf0f5; border-top:2px solid var(--border); }
+table.grid .summary-row td { font-weight:600; }
+.brand-chip { background:#fff; border-radius:8px; padding:8px; margin-bottom:12px; }
+.brand-chip img { width:100%; height:auto; display:block; }
+.sidebar .brand { color:#fff; font-weight:700; font-size:15px; padding:2px 10px 14px; letter-spacing:.3px; }

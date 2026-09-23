@@ -50,6 +50,8 @@ const STATUS_COLORS = {
   PENDING: 'orange', RECEIVED: 'green', CANCELLED: 'gray',
   DRAFT: 'gray', APPROVED: 'blue', COMPLETED: 'green',
   ACTIVE: 'green', SUCCESS: 'green', FAILED: 'red',
+  ASSIGN: 'blue', UNASSIGN: 'orange', TRANSFER: 'green',
+  USER: 'blue', DEPARTMENT: 'orange', PLACE: 'green', OTHER: 'gray',
 }
 
 export function Badge({ value }) {

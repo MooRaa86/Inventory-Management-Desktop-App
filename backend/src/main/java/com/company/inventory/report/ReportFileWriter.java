@@ -63,6 +63,17 @@ public class ReportFileWriter {
                 "/api/reports/files/" + fileName);
     }
 
+    public void writeTo(java.io.OutputStream out, String type, ReportService.Format format,
+                         ReportService.ReportTable table) throws IOException {
+        switch (format) {
+            case CSV -> writeCsvTo(out, table);
+            case XLSX -> writeXlsxTo(out, table);
+            case PDF -> writePdfTo(out, type, table);
+            default -> throw new ApiException(422, "INVALID_FORMAT",
+                    "JSON is returned inline; choose CSV, XLSX or PDF for a file.");
+        }
+    }
+
     public Path resolveDownload(String fileName) {
         if (fileName == null || !fileName.matches("[A-Za-z0-9._-]+")) {
             throw new ApiException(422, "INVALID_FILE_NAME", "Invalid file name.");
@@ -226,6 +237,15 @@ public class ReportFileWriter {
                     PdfReportRenderer.ColType.NUMBER,   // Entity ID
                     PdfReportRenderer.ColType.TEXT      // Description
             );
+            case "assignments" -> List.of(
+                    PdfReportRenderer.ColType.TEXT,     // Product
+                    PdfReportRenderer.ColType.TEXT,     // Holder
+                    PdfReportRenderer.ColType.STATUS,   // Holder Type
+                    PdfReportRenderer.ColType.NUMBER,   // Assigned Qty
+                    PdfReportRenderer.ColType.DATE,     // Assigned Date
+                    PdfReportRenderer.ColType.TEXT,     // Assigned By
+                    PdfReportRenderer.ColType.TEXT      // Notes
+            );
             default -> null;
         };
     }
@@ -255,7 +275,64 @@ public class ReportFileWriter {
                         "TOTAL (" + t.rows().size() + " purchases)", "", "", "",
                         totalAmount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(), "", "");
             }
+            case "assignments" -> {
+                java.math.BigDecimal totalQty = java.math.BigDecimal.ZERO;
+                for (var row : t.rows()) {
+                    if (row.size() >= 4) {
+                        try { totalQty = totalQty.add(new java.math.BigDecimal(row.get(3))); } catch (Exception ignored) {}
+                    }
+                }
+                yield java.util.List.of(
+                        "TOTAL (" + t.rows().size() + " assignments)", "", "",
+                        totalQty.stripTrailingZeros().toPlainString(), "", "", "");
+            }
             default -> null;
         };
+    }
+
+    // --- Streaming methods (write directly to OutputStream, no file saved) ---
+
+    private void writeCsvTo(java.io.OutputStream out, ReportService.ReportTable t) throws IOException {
+        try (Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+            w.write('\ufeff');
+            w.write(csvLine(t.columns()));
+            for (List<String> row : t.rows()) {
+                w.write(csvLine(row));
+            }
+            w.flush();
+        }
+    }
+
+    private void writeXlsxTo(java.io.OutputStream out, ReportService.ReportTable t) throws IOException {
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(100)) {
+            Sheet sheet = wb.createSheet(safeSheetName(t.type()));
+            int rowIdx = 0;
+            Row header = sheet.createRow(rowIdx++);
+            for (int c = 0; c < t.columns().size(); c++) {
+                header.createCell(c).setCellValue(t.columns().get(c));
+            }
+            for (List<String> data : t.rows()) {
+                Row r = sheet.createRow(rowIdx++);
+                for (int c = 0; c < data.size(); c++) {
+                    Cell cell = r.createCell(c);
+                    cell.setCellValue(data.get(c));
+                }
+            }
+            try (var buffered = new BufferedOutputStream(out)) {
+                wb.write(buffered);
+                buffered.flush();
+            }
+            wb.dispose();
+        }
+    }
+
+    private void writePdfTo(java.io.OutputStream out, String type, ReportService.ReportTable t) throws IOException {
+        String companyName = settingsService.get("company.name");
+        if (companyName == null || companyName.isBlank()) companyName = settingsService.get("app.name");
+        List<PdfReportRenderer.ColType> colTypes = getColTypes(t.type());
+        List<String> summaryRow = getSummaryRow(t);
+        PdfReportRenderer.render(out, companyName, t.type(),
+                t.columns(), t.rows(), colTypes, summaryRow, null);
+        out.flush();
     }
 }

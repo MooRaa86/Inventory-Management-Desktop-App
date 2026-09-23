@@ -53,6 +53,11 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
     }
 
+    @PostMapping("/reset-admin")
+    public ResponseEntity<Map<String, String>> resetAdmin() {
+        return ResponseEntity.ok(authService.resetAdmin());
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
         AuthenticatedUser principal = currentPrincipal();

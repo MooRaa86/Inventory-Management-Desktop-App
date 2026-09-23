@@ -32,17 +32,17 @@ public class ReportController {
 
     public record ReportRequest(ReportService.Format format, java.time.LocalDate dateFrom,
                                 java.time.LocalDate dateTo, Long productId, Long categoryId,
-                                Long supplierId, String username) {
+                                Long supplierId, Long holderId, String username) {
 
         ReportService.ReportParams params() {
             return new ReportService.ReportParams(dateFrom(), dateTo(), productId(),
-                    categoryId(), supplierId(), username());
+                    categoryId(), supplierId(), holderId(), username());
         }
     }
 
     @PostMapping("/{type}")
     @PreAuthorize("hasAuthority('REPORT_VIEW') || hasAuthority('REPORT_EXPORT')")
-    public Object generate(@PathVariable String type, @RequestBody ReportRequest req) {
+    public Object generate(@PathVariable String type, @RequestBody ReportRequest req) throws IOException {
         ReportService.Format format = req.format() == null
                 ? ReportService.Format.JSON : req.format();
         ReportService.ReportTable table = reportService.build(type, req.params());
@@ -54,11 +54,40 @@ public class ReportController {
             throw new com.company.inventory.common.error.ApiException(403, "FORBIDDEN",
                     "REPORT_EXPORT permission required to export files.");
         }
-        var file = fileWriter.write(type, format, table);
+
+        String safeType = type.toLowerCase().replace('-', '_');
+        String stamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String ext = switch (format) {
+            case CSV -> "csv";
+            case XLSX -> "xlsx";
+            case PDF -> "pdf";
+            default -> "json";
+        };
+        String fileName = safeType + "_" + stamp + "." + ext;
+
+        var out = new java.io.ByteArrayOutputStream();
+        fileWriter.writeTo(out, type, format, table);
+        byte[] bytes = out.toByteArray();
+
         auditService.log(AuditActions.REPORT_EXPORT,
                 "report", null,
-                "Exported " + type + " as " + format + " -> " + file.fileName());
-        return file;
+                "Exported " + type + " as " + format + " (streamed)");
+
+        jakarta.servlet.http.HttpServletResponse response =
+                ((org.springframework.web.context.request.ServletRequestAttributes)
+                        org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getResponse();
+        response.setContentType(switch (format) {
+            case CSV -> "text/csv";
+            case XLSX -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case PDF -> "application/pdf";
+            default -> "application/octet-stream";
+        });
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        response.setContentLengthLong(bytes.length);
+        response.getOutputStream().write(bytes);
+        response.getOutputStream().flush();
+        return null;
     }
 
     @GetMapping("/files/{fileName:.+}")

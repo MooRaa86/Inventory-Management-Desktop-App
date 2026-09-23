@@ -40,6 +40,7 @@ public final class AuditActions {
     public static final String USER_CREATE = "USER_CREATE";
     public static final String USER_UPDATE = "USER_UPDATE";
     public static final String USER_PASSWORD_RESET = "USER_PASSWORD_RESET";
+    public static final String ADMIN_PASSWORD_RESET = "ADMIN_PASSWORD_RESET";
     public static final String USER_DISABLE = "USER_DISABLE";
     public static final String USER_ENABLE = "USER_ENABLE";
     public static final String ROLE_ASSIGN = "ROLE_ASSIGN";
@@ -54,6 +55,14 @@ public final class AuditActions {
     public static final String SETTINGS_CHANGE = "SETTINGS_CHANGE";
     public static final String REPORT_EXPORT = "REPORT_EXPORT";
     public static final String ADMIN_BOOTSTRAP = "ADMIN_BOOTSTRAP";
+
+    public static final String HOLDER_CREATE = "HOLDER_CREATE";
+    public static final String HOLDER_UPDATE = "HOLDER_UPDATE";
+    public static final String HOLDER_DELETE = "HOLDER_DELETE";
+
+    public static final String ASSIGNMENT_ASSIGN = "ASSIGNMENT_ASSIGN";
+    public static final String ASSIGNMENT_UNASSIGN = "ASSIGNMENT_UNASSIGN";
+    public static final String ASSIGNMENT_TRANSFER = "ASSIGNMENT_TRANSFER";
 
     private AuditActions() {
     }

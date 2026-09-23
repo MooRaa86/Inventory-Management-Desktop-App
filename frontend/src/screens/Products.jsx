@@ -75,13 +75,14 @@ export default function Products() {
         </div>
 
         <table className="grid">
-          <thead><tr><th>Name</th><th>Category</th><th>Unit</th><th>Current</th><th>Min</th><th>Cost</th><th>Sell</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Category</th><th>Unit</th><th>Current</th><th>Assigned</th><th>Min</th><th>Cost</th><th>Sell</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {(data?.content || []).map((p) => (
               <tr key={p.id} style={!p.active ? { opacity: .5 } : undefined}>
                 <td>{p.name}</td><td>{p.categoryName || '—'}</td>
                 <td>{p.unitSymbol}</td>
-                <td><b>{p.currentStock}</b></td><td>{p.minStock}</td>
+                <td><b>{p.currentStock}</b></td><td>{Number(p.assignedQuantity || 0)}</td>
+                <td>{p.minStock}</td>
                 <td>{fmtMoney(p.costPrice)}</td><td>{fmtMoney(p.sellingPrice)}</td>
                 <td><Badge value={p.stockStatus} /></td>
                 <td style={{ whiteSpace: 'nowrap' }}>

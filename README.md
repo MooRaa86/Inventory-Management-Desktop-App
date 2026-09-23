@@ -173,9 +173,21 @@ Goods issue workflow:
 - **Line items** with product, quantity
 - Department/recipient tracking
 
+### Holders & Assignments
+
+Track which products are in the hands of users, departments, or places — separate from central warehouse stock:
+
+- **Holders** — unified registry of people/places (types: `USER`, `DEPARTMENT`, `PLACE`, `OTHER`)
+- **Assign** — moves a quantity out of central inventory into a holder's hands (stock-out movement is recorded in the ledger)
+- **Return (Unassign)** — brings the quantity back into central inventory
+- **Transfer** — moves a quantity directly between two holders; central stock is unchanged
+- **Products screen** shows an **Assigned** column (total quantity currently with holders)
+- **History ledger** — every assign / return / transfer recorded with actor, timestamp, quantity
+- **Safeguards** — cannot assign more than central stock holds, cannot return more than a holder has, holders with assignments can't be deleted (deactivate instead)
+
 ### Reports & PDF Export
 
-Seven report types, each with professional PDF generation:
+Eight report types, each with professional PDF generation:
 
 | Report | Description |
 |--------|-------------|
@@ -184,6 +196,7 @@ Seven report types, each with professional PDF generation:
 | **Stock Movements** | Complete movement history with type indicators |
 | **Purchases** | All purchase orders with totals |
 | **Issues** | All goods issues with totals |
+| **Assignments** | What each holder currently has, with assigned quantities |
 | **Suppliers** | Supplier directory with contact info |
 | **Audit Log** | System-wide change audit trail |
 
@@ -207,8 +220,8 @@ Seven report types, each with professional PDF generation:
 | Role | Permissions |
 |------|------------|
 | `ADMIN` | Everything, including users, settings, backup/restore |
-| `WAREHOUSE_MANAGER` | Catalog, purchases, issues, reports, backups |
-| `WAREHOUSE_EMPLOYEE` | Stock operations, drafts, view reports |
+| `WAREHOUSE_MANAGER` | Catalog, purchases, issues, reports, assignments, backups |
+| `WAREHOUSE_EMPLOYEE` | Stock operations, drafts, view reports & assignments |
 | `VIEWER` | Read-only access to all screens |
 
 - **Password policy** — minimum 8 characters, complexity requirements
@@ -323,6 +336,7 @@ graph TB
             POM["pom.xml"]
             subgraph SRC["src/main/java/"]
                 AUTH["auth/"]
+                ASSIGN["assignment/"]
                 AUDIT["audit/"]
                 BACKUP["backup/"]
                 CAT["category/"]
@@ -343,13 +357,14 @@ graph TB
             end
             subgraph RES["src/main/resources/"]
                 PROP["application.properties"]
-                MIG["db/migration/V1–V18"]
+                MIG["db/migration/V1–V22"]
                 STATIC["static/ (embedded React SPA)"]
             end
             subgraph TEST["src/test/"]
                 T1["MoneyTest"]
                 T2["ConcurrencyTest"]
                 T3["PurchaseLifecycleTest"]
+                T4["AssignmentLifecycleTest"]
             end
         end
 
@@ -360,7 +375,7 @@ graph TB
                 APP["App.jsx"]
                 API["api.js"]
                 CSS["index.css"]
-                subgraph SCREENS["screens/ (16 screens)"]
+                subgraph SCREENS["screens/ (18 screens)"]
                     S1["Dashboard"]
                     S2["Products"]
                     S3["Purchases"]
@@ -371,7 +386,8 @@ graph TB
                     S8["Users"]
                     S9["Backups"]
                     S10["Guide"]
-                    S11["..."]
+                    S11["Holders"]
+                    S12["Assignments"]
                 end
             end
         end
@@ -406,6 +422,11 @@ erDiagram
     products ||--o{ issue_items : line_of
     purchases ||--o{ purchase_items : contains
     issues ||--o{ issue_items : contains
+
+    holders ||--o{ product_assignments : receives
+    products ||--o{ product_assignments : assigned_to
+    products ||--o{ assignment_transfers : logged_as
+    holders ||--o{ assignment_transfers : from_or_to
 
     users ||--o{ audit_logs : performs
     users ||--o{ stock_movements : records
@@ -542,6 +563,20 @@ All endpoints prefixed with `/api`. Auth via `Authorization: Bearer <token>`.
 | `POST` | `/api/issues/{id}/approve` | MANAGER+ | Approve |
 | `POST` | `/api/issues/{id}/complete` | MANAGER+ | Complete (deducts stock) |
 
+### Holders & Assignments
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|-----------|-------------|
+| `GET/POST/PUT/DELETE` | `/api/holders` | HOLDER_VIEW/HOLDER_MANAGE | Holder CRUD |
+| `POST` | `/api/holders/{id}/deactivate` | HOLDER_MANAGE | Deactivate holder |
+| `POST` | `/api/holders/{id}/activate` | HOLDER_MANAGE | Reactivate holder |
+| `GET` | `/api/holders/all` | HOLDER_VIEW | All holders (for dropdowns) |
+| `GET` | `/api/assignments` | ASSIGNMENT_VIEW | Assignment list (product/holder filters) |
+| `POST` | `/api/assignments/assign` | ASSIGNMENT_MANAGE | Assign (moves stock OUT of central) |
+| `POST` | `/api/assignments/unassign` | ASSIGNMENT_MANAGE | Return (moves stock IN to central) |
+| `POST` | `/api/assignments/transfer` | ASSIGNMENT_MANAGE | Transfer between holders |
+| `GET` | `/api/assignments/history` | ASSIGNMENT_VIEW | Full assign/return/transfer ledger |
+
 ### Reports, Users, Settings, Backups
 
 | Method | Endpoint | Permission | Description |
@@ -596,6 +631,7 @@ mvn test
 mvn test "-Dtest=MoneyTest"
 mvn test "-Dtest=InventoryServiceConcurrencyTest"
 mvn test "-Dtest=PurchaseLifecycleTest"
+mvn test "-Dtest=AssignmentLifecycleTest"
 ```
 
 | Test | What It Proves |
@@ -603,6 +639,7 @@ mvn test "-Dtest=PurchaseLifecycleTest"
 | **MoneyTest** | Integer cents arithmetic — no floating-point drift |
 | **ConcurrencyTest** | 10 threads race to oversell — exactly available qty sold, rest rejected |
 | **PurchaseLifecycleTest** | Full workflow: create → receive → stock increased |
+| **AssignmentLifecycleTest** | Assign/transfer/unassign move stock correctly, history is recorded, and business rules (insufficient stock, over-return, holder-in-use) are enforced |
 
 ---
 

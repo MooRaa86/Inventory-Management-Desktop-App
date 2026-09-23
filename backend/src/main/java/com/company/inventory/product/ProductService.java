@@ -38,12 +38,37 @@ public class ProductService {
                 criteria.active(), criteria.stockStatus(),
                 PageRequest.of(criteria.page(), Math.min(criteria.size(), 200),
                         Sort.by(Sort.Direction.ASC, "name")));
-        return page.map(ProductDto::from);
+        java.util.Map<Long, BigDecimal> assigned =
+                assignedSums(page.getContent().stream().map(Product::getId).toList());
+        return page.map(p -> ProductDto.from(p)
+                .withAssignedQuantity(assigned.get(p.getId())));
     }
 
     @Transactional(readOnly = true)
     public ProductDto get(Long id) {
-        return ProductDto.from(find(id));
+        return ProductDto.from(find(id)).withAssignedQuantity(assignedSums(java.util.List.of(id)).get(id));
+    }
+
+    /** Total quantity currently assigned to holders per product id. */
+    private java.util.Map<Long, BigDecimal> assignedSums(java.util.List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        String placeholders = String.join(",",
+                java.util.Collections.nCopies(productIds.size(), "?"));
+        return jdbc.query(
+                "SELECT pa.product_id, SUM(pa.quantity) AS qty " +
+                        "FROM product_assignments pa " +
+                        "WHERE pa.product_id IN (" + placeholders + ") " +
+                        "GROUP BY pa.product_id",
+                rs -> {
+                    java.util.Map<Long, BigDecimal> m = new java.util.HashMap<>();
+                    while (rs.next()) {
+                        m.put(rs.getLong("product_id"), rs.getBigDecimal("qty"));
+                    }
+                    return m;
+                },
+                productIds.toArray());
     }
 
     @Transactional

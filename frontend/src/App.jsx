@@ -12,6 +12,8 @@ import Stock from './screens/Stock'
 import Suppliers from './screens/Suppliers'
 import Purchases from './screens/Purchases'
 import Issues from './screens/Issues'
+import Holders from './screens/Holders'
+import Assignments from './screens/Assignments'
 import Reports from './screens/Reports'
 import Users from './screens/Users'
 import AuditLogs from './screens/AuditLogs'
@@ -48,7 +50,8 @@ function Sidebar() {
 
   return (
     <div className="sidebar">
-      <div className="brand">📦 {appName}</div>
+      <div className="brand-chip"><img src="/logo.png" alt={appName} /></div>
+      <div className="brand">{appName}</div>
       <Item to="/" >Dashboard</Item>
       <div className="navsection">Inventory</div>
       <Item to="/products" perm="PRODUCT_VIEW">Products</Item>
@@ -59,6 +62,9 @@ function Sidebar() {
       <Item to="/suppliers" perm="SUPPLIER_VIEW">Suppliers</Item>
       <Item to="/purchases" perm="PURCHASE_VIEW">Purchases</Item>
       <Item to="/issues" perm="ISSUE_VIEW">Issues</Item>
+      <div className="navsection">Assignments</div>
+      <Item to="/holders" perm="HOLDER_VIEW">Holders</Item>
+      <Item to="/assignments" perm="ASSIGNMENT_VIEW">Assignments</Item>
       <div className="navsection">Insights</div>
       <Item to="/reports" perm="REPORT_VIEW">Reports</Item>
       <Item to="/audit" perm="AUDIT_VIEW">Audit Log</Item>
@@ -95,6 +101,8 @@ function Shell() {
           <Route path="/suppliers" element={<Suppliers />} />
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/issues" element={<Issues />} />
+          <Route path="/holders" element={<Holders />} />
+          <Route path="/assignments" element={<Assignments />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/users" element={<Users />} />
           <Route path="/audit" element={<AuditLogs />} />

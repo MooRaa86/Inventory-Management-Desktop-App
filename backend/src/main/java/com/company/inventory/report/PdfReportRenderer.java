@@ -3,6 +3,7 @@ package com.company.inventory.report;
 import com.lowagie.text.Document;
 // Element constants: ALIGN_LEFT=0, ALIGN_CENTER=1, ALIGN_RIGHT=2
 import com.lowagie.text.Font;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -38,6 +39,35 @@ public class PdfReportRenderer {
 
     // Column type hints for formatting
     public enum ColType { TEXT, CURRENCY, NUMBER, STATUS, DATE }
+
+    private static void addLogoLetterhead(Document doc, float maxWidth) {
+        try {
+            try (var in = PdfReportRenderer.class.getResourceAsStream("/logo.png")) {
+                if (in == null) return;
+                Image logo = Image.getInstance(in.readAllBytes());
+                if (logo.getWidth() <= 0) return;
+                float targetHeight = 52f;
+                float scale = targetHeight / logo.getHeight();
+                float targetWidth = logo.getWidth() * scale;
+                if (targetWidth > maxWidth) {
+                    scale = maxWidth / logo.getWidth();
+                    targetWidth = maxWidth;
+                    targetHeight = logo.getHeight() * scale;
+                }
+                logo.scaleAbsolute(targetWidth, targetHeight);
+                logo.setAlignment(Image.ALIGN_RIGHT);
+                doc.add(logo);
+                Paragraph gap = new Paragraph(" ");
+                gap.setSpacingAfter(8);
+                doc.add(gap);
+            }
+        } catch (Exception e) {
+            // Logo is presentational - never fail the whole report render.
+            log.warn("Could not embed report logo: {}", e.getMessage());
+        }
+    }
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PdfReportRenderer.class);
 
     /**
      * Render a professional PDF report.
@@ -76,6 +106,8 @@ public class PdfReportRenderer {
             });
 
             doc.open();
+
+            addLogoLetterhead(doc, doc.getPageSize().getWidth() - 72);
 
             // --- Company header bar ---
             PdfPTable headerBar = new PdfPTable(1);

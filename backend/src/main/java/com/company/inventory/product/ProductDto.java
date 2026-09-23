@@ -25,6 +25,7 @@ public record ProductDto(
         long sellCents,
         BigDecimal costPrice,
         BigDecimal sellingPrice,
+        BigDecimal assignedQuantity,
         boolean active,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
@@ -55,6 +56,15 @@ public record ProductDto(
                         || statusOf(p.getCurrentStock(), p.getMinStock()).equals(OUT_OF_STOCK),
                 p.getCostCents(), p.getSellCents(),
                 Money.fromCents(p.getCostCents()), Money.fromCents(p.getSellCents()),
+                BigDecimal.ZERO,
                 p.isActive(), p.getCreatedAt(), p.getUpdatedAt());
+    }
+
+    public ProductDto withAssignedQuantity(BigDecimal assigned) {
+        return new ProductDto(id, name, description, categoryId, categoryName, unitId,
+                unitName, unitSymbol, supplierId, supplierName, minStock, maxStock,
+                currentStock, stockStatus, lowStock, costCents, sellCents, costPrice,
+                sellingPrice, assigned == null ? BigDecimal.ZERO : assigned,
+                active, createdAt, updatedAt);
     }
 }

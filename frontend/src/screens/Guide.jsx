@@ -83,7 +83,20 @@ export default function Guide() {
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>8. Reports</h3>
+        <h3 style={{ marginTop: 0 }}>8. Holders &amp; Assignments</h3>
+        <p>Track which products are in the hands of users, departments, or places — separate from central warehouse stock:</p>
+        <ul>
+          <li><b>Holders</b> — create and manage the people/places products are assigned to (type: USER, DEPARTMENT, PLACE, OTHER). Deactivate a holder instead of deleting when it has assigned products</li>
+          <li><b>Assign</b> — moves a quantity out of central inventory into a holder's hands. On the Products screen the <b>Assigned</b> column shows how much of each product is currently with holders</li>
+          <li><b>Return (Unassign)</b> — brings the quantity back into central inventory</li>
+          <li><b>Transfer</b> — moves a quantity directly between two holders; central stock is unchanged</li>
+          <li><b>History tab</b> — full ledger of assign / return / transfer events with who performed them</li>
+        </ul>
+        <p>Assignments only work with stock that exists: you cannot assign more than the central inventory holds, and you cannot return more than a holder currently has.</p>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h3 style={{ marginTop: 0 }}>9. Reports</h3>
         <p>Generate reports in multiple formats:</p>
         <ul>
           <li><b>Inventory</b> — all products with stock levels, costs, and total value</li>
@@ -91,6 +104,7 @@ export default function Guide() {
           <li><b>Movements</b> — full movement history with dates and users</li>
           <li><b>Purchases</b> — purchase history with totals</li>
           <li><b>Issues</b> — issue history</li>
+          <li><b>Assignments</b> — what each holder currently has, with assigned quantities</li>
           <li><b>Suppliers</b> — supplier directory</li>
           <li><b>Audit</b> — complete audit trail of all actions</li>
         </ul>
@@ -98,19 +112,19 @@ export default function Guide() {
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>9. Users &amp; Roles</h3>
+        <h3 style={{ marginTop: 0 }}>10. Users &amp; Roles</h3>
         <p>Manage who can access the system:</p>
         <ul>
           <li><b>ADMIN</b> — full access to everything including users, settings, and backups</li>
-          <li><b>WAREHOUSE MANAGER</b> — catalog, purchases, issues, reports, backups</li>
-          <li><b>WAREHOUSE EMPLOYEE</b> — stock operations, create drafts, view reports</li>
+          <li><b>WAREHOUSE MANAGER</b> — catalog, purchases, issues, reports, assignments, backups</li>
+          <li><b>WAREHOUSE EMPLOYEE</b> — stock operations, create drafts, view reports and assignments</li>
           <li><b>VIEWER</b> — read-only access</li>
         </ul>
         <p>You can create users, assign roles, reset passwords, and enable/disable accounts.</p>
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>10. Backups</h3>
+        <h3 style={{ marginTop: 0 }}>11. Backups</h3>
         <p>Protect your data:</p>
         <ul>
           <li><b>Create backup</b> — creates a zip file with your database + metadata</li>
@@ -123,12 +137,12 @@ export default function Guide() {
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>11. Audit Log</h3>
+        <h3 style={{ marginTop: 0 }}>12. Audit Log</h3>
         <p>Every action in the system is recorded with the user, timestamp, and details. Filter by username, action type, or date range.</p>
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>12. Settings</h3>
+        <h3 style={{ marginTop: 0 }}>13. Settings</h3>
         <ul>
           <li><b>Company name</b> — shown on the dashboard</li>
           <li><b>Application name</b> — shown in the sidebar</li>
@@ -138,7 +152,7 @@ export default function Guide() {
       </div>
 
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>13. Deployment &amp; Migration</h3>
+        <h3 style={{ marginTop: 0 }}>14. Deployment &amp; Migration</h3>
         <p>The application is <b>fully portable</b> — no installation required on the target PC.</p>
         <h3>Folder Structure</h3>
         <pre style={{ background: '#f4f6f8', border: '1px solid #d1d5db', borderRadius: 6, padding: 12, fontSize: 12, lineHeight: 1.5, overflowX: 'auto' }}>{`InventoryManager/

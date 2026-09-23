@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/health", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/health", "/api/auth/login", "/api/auth/reset-admin").permitAll()
                         // SPA static assets served by Spring Boot itself
                         .requestMatchers("/", "/index.html", "/favicon.ico",
                                 "/assets/**", "/manifest.webmanifest", "/*.svg", "/*.png").permitAll()

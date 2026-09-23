@@ -7,6 +7,7 @@ import com.company.inventory.issue.Issue;
 import com.company.inventory.product.Product;
 import com.company.inventory.purchase.Purchase;
 import com.company.inventory.supplier.Supplier;
+import com.company.inventory.assignment.ProductAssignment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,6 +40,7 @@ public class ReportService {
     private final com.company.inventory.issue.IssueRepository issueRepository;
     private final com.company.inventory.supplier.SupplierRepository supplierRepository;
     private final com.company.inventory.audit.AuditLogRepository auditLogRepository;
+    private final com.company.inventory.assignment.ProductAssignmentRepository assignmentRepository;
 
     public enum Format {JSON, CSV, XLSX, PDF}
 
@@ -46,7 +48,7 @@ public class ReportService {
     }
 
     public record ReportParams(LocalDate from, LocalDate to, Long productId, Long categoryId,
-                               Long supplierId, String username) {
+                               Long supplierId, Long holderId, String username) {
     }
 
     public record GeneratedFile(String fileName, long sizeBytes, String downloadUrl) {
@@ -54,7 +56,7 @@ public class ReportService {
 
     public static final Set<String> TYPES = Set.of(
             "inventory", "low-stock", "movements", "purchases", "issues",
-            "suppliers", "audit");
+            "suppliers", "audit", "assignments");
 
     @Transactional(readOnly = true)
     public ReportTable build(String type, ReportParams p) {
@@ -66,6 +68,7 @@ public class ReportService {
             case "issues" -> issues(p);
             case "suppliers" -> suppliers();
             case "audit" -> audit(p);
+            case "assignments" -> assignments(p);
             default -> throw new ApiException(422, "UNKNOWN_REPORT_TYPE",
                     "Unknown report type: " + type + ". Valid: " + TYPES);
         };
@@ -259,6 +262,23 @@ public class ReportService {
                 List.of("ID", "Date", "User", "Action", "Entity Type", "Entity ID",
                         "Description"),
                 rows);
+    }
+
+    private ReportTable assignments(ReportParams p) {
+        var page = assignmentRepository.search(p.productId(), p.holderId(), null,
+                PageRequest.of(0, Integer.MAX_VALUE / 2, Sort.by(Sort.Direction.ASC, "product.name")));
+        List<List<String>> rows = new ArrayList<>();
+for (ProductAssignment a : page.getContent()) {
+        rows.add(List.of(nz(a.getProduct().getName()),
+                nz(a.getHolder().getName()), nz(a.getHolder().getType()),
+                num(a.getQuantity()),
+                a.getAssignedAt() == null ? "" : a.getAssignedAt().format(DTF),
+                nz(a.getAssignedBy()), nz(a.getNotes())));
+    }
+    return new ReportTable("assignments",
+            List.of("Product", "Holder", "Holder Type", "Assigned Qty",
+                    "Assigned Date", "Assigned By", "Notes"),
+            rows);
     }
 
     private String nz(String v) {

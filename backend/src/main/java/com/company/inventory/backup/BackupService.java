@@ -231,12 +231,14 @@ public class BackupService {
             Files.createDirectories(dir);
             Path target = dir.resolve(record.getFilename());
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(source);
+            repository.delete(record);
             auditService.log(AuditActions.BACKUP_EXPORT, "backup", id,
-                    "Exported " + record.getFilename() + " to " + target);
+                    "Exported (moved) " + record.getFilename() + " to " + target);
             return target;
         } catch (IOException e) {
             throw new ApiException(500, "BACKUP_EXPORT_FAILED",
-                    "Could not copy backup: " + e.getMessage());
+                    "Could not move backup: " + e.getMessage());
         }
     }
 
