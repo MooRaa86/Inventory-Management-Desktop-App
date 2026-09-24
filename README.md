@@ -22,7 +22,8 @@ A production-grade, self-contained desktop application for warehouse operations.
 - Atomic stock engine — every change is transactional, oversell is rejected
 - Full audit trail — every action logged with user and timestamp
 - Role-based access — 4 built-in roles with granular permissions
-- Professional PDF reports — branded, styled, ready for print
+- Professional PDF reports — branded with the company logo, styled, ready for print
+- Company branding — logo shown on the login screen, sidebar, and PDF reports
 
 ---
 
@@ -51,16 +52,16 @@ graph TB
         end
 
         subgraph Backend["Spring Boot 3 Backend"]
-            REST[REST API<br/>14 Controllers]
+            REST[REST API<br/>17 Controllers]
             SEC[JWT Auth + RBAC]
             RPT[PDF/CSV/XLSX Reports]
             JPA[JPA / Hibernate]
-            FW[Flyway<br/>18 Migrations]
+            FW[Flyway<br/>22 Migrations]
             DB[(SQLite<br/>WAL + FK)]
         end
 
         subgraph Frontend["React 19 SPA"]
-            UI[16 Screens]
+            UI[18 Screens]
             ROUTER[React Router]
         end
 
@@ -184,6 +185,8 @@ Track which products are in the hands of users, departments, or places — separ
 - **Products screen** shows an **Assigned** column (total quantity currently with holders)
 - **History ledger** — every assign / return / transfer recorded with actor, timestamp, quantity
 - **Safeguards** — cannot assign more than central stock holds, cannot return more than a holder has, holders with assignments can't be deleted (deactivate instead)
+- **Per-holder drill-down** — the Holders screen lists every product currently with a specific holder (qty, date, assigned by, notes)
+- **One-click export** — export a holder's products as CSV, XLSX, or PDF directly from the drill-down modal
 
 ### Reports & PDF Export
 
@@ -196,21 +199,27 @@ Eight report types, each with professional PDF generation:
 | **Stock Movements** | Complete movement history with type indicators |
 | **Purchases** | All purchase orders with totals |
 | **Issues** | All goods issues with totals |
-| **Assignments** | What each holder currently has, with assigned quantities |
+| **Assignments** | What each holder currently has, with assigned quantities, dates, assigned-by, and notes |
 | **Suppliers** | Supplier directory with contact info |
 | **Audit Log** | System-wide change audit trail |
 
-**PDF Report Features:**
+**Excel/PDF Report Features:**
+- Company logo letterhead on every page header
 - Company name header bar (configurable in Settings)
 - Report title with generation date and row count
 - Smart column widths (wider for names, narrower for numbers)
 - Right-aligned currency and number columns
 - Color-coded status badges (green/orange/red)
 - Alternating row colors for readability
-- Summary/total rows for Inventory (total stock value) and Purchases (total amount)
+- Summary/total rows for Inventory (total stock value), Purchases (total amount), and Assignments (total assigned qty)
 - Page numbers footer
 
-**Export formats:** PDF, CSV, XLSX, JSON
+**Reports screen:**
+- Live **preview** of the generated data before export
+- Client-side **totals row** on the preview (numeric columns summed)
+- Type descriptions, row/column count chips, generated-at timestamp
+- Format selector with one-click download: **JSON, CSV, XLSX, PDF**
+- Holder-specific export — Reports filters by `holderId`, so a holder's products can be exported on demand (also available directly from the Holders screen)
 
 ### Users & Security
 
@@ -228,6 +237,12 @@ Eight report types, each with professional PDF generation:
 - **Account lockout** — configurable failed attempt threshold
 - **BCrypt hashing** — passwords never stored in plaintext
 - **Full audit log** — every API mutation recorded with user, action, entity, timestamp
+
+**Forgot password / admin reset:**
+- The login screen has a **"Forgot password?"** flow that resets the admin account to factory defaults
+- Reset restores `admin` / `admin@omar.com`, re-enables the account, clears lockout, and re-arms it
+- Credentials are **never shown on screen or in the HTTP response** — they're written to `config\reset-admin-credentials.txt` on the machine so only an on-site admin can retrieve them
+- Users are directed to contact the administrator (Omar Medhat · `mr.omarmedhat@gmail.com`) to receive their credentials
 
 ### Backup & Restore
 
@@ -315,15 +330,17 @@ dist\InventoryManager\
 ├── electron\              ← prebuilt Electron binaries
 ├── backend\
 │   ├── inventory-backend.jar
-│   ├── data\              ← SQLite DB (created on first run)
-│   ├── backups\
-│   ├── exports\
+│   ├── data\              ← SQLite DB + uploaded files (created on first run)
+│   ├── backups\           ← automatic/manual backups
+│   ├── exports\           ← downloaded reports
 │   ├── logs\
-│   └── config\            ← JWT secret, admin credentials
+│   └── config\            ← JWT secret, initial & reset admin credentials
 └── runtime\               ← jlink-trimmed JRE (~80MB)
 ```
 
 **Target machine:** Windows 10/11, no Java/Node/npm needed.
+
+**Distributing a fresh copy (no data):** before copying the folder to another user, delete `backend\data\`, `backend\config\`, `backend\logs\`, `backend\backups\`, `backend\exports\`, and `backend\documents\`. On first launch the app recreates the database (migrations V1–V22), a fresh JWT secret, and bootstraps a new admin account — the new user logs in with `admin` / `admin@omar.com`. Do **not** delete `inventory-backend.jar`, `electron\`, `runtime\`, `app\`, `start.cmd`, or the root `index.html` / `assets\`. If you preserve `config\`, the existing data and JWT secret travel with the copy.
 
 ---
 
@@ -529,6 +546,7 @@ All endpoints prefixed with `/api`. Auth via `Authorization: Bearer <token>`.
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `POST` | `/api/auth/login` | No | Login, returns JWT |
+| `POST` | `/api/auth/reset-admin` | No | Reset admin to factory defaults (creds written to `config\reset-admin-credentials.txt`, not returned) |
 | `GET` | `/api/health` | No | Health check |
 
 ### Core Resources
@@ -572,6 +590,8 @@ All endpoints prefixed with `/api`. Auth via `Authorization: Bearer <token>`.
 | `POST` | `/api/holders/{id}/activate` | HOLDER_MANAGE | Reactivate holder |
 | `GET` | `/api/holders/all` | HOLDER_VIEW | All holders (for dropdowns) |
 | `GET` | `/api/assignments` | ASSIGNMENT_VIEW | Assignment list (product/holder filters) |
+| `GET` | `/api/assignments/holder?holderId=` | ASSIGNMENT_VIEW | All products currently with one holder |
+| `GET` | `/api/assignments/product?productId=` | ASSIGNMENT_VIEW | All holders currently holding one product |
 | `POST` | `/api/assignments/assign` | ASSIGNMENT_MANAGE | Assign (moves stock OUT of central) |
 | `POST` | `/api/assignments/unassign` | ASSIGNMENT_MANAGE | Return (moves stock IN to central) |
 | `POST` | `/api/assignments/transfer` | ASSIGNMENT_MANAGE | Transfer between holders |
@@ -581,7 +601,7 @@ All endpoints prefixed with `/api`. Auth via `Authorization: Bearer <token>`.
 
 | Method | Endpoint | Permission | Description |
 |--------|----------|-----------|-------------|
-| `POST` | `/api/reports/{type}` | VIEWER+ | Generate report |
+| `POST` | `/api/reports/{type}` | VIEWER+ | Generate report (supports `holderId`, `productId`, `categoryId`, `supplierId`, date filters) |
 | `GET` | `/api/reports/files/{name}` | VIEWER+ | Download report |
 | `GET/POST/PUT/DELETE` | `/api/users` | ADMIN | User management |
 | `GET` | `/api/settings` | VIEWER+ | Get settings |
@@ -650,7 +670,7 @@ mvn test "-Dtest=AssignmentLifecycleTest"
 | Port 8475 busy | Close other instance or set `INVENTORY_PORT` |
 | SQLITE_BUSY | Close all other app instances |
 | White screen in Electron | Wait 5s and relaunch; check logs |
-| Forgot admin password | Another ADMIN resets it, or restore from backup |
+| Forgot admin password | Use **"Forgot password?"** on the login screen to reset; new creds at `config\reset-admin-credentials.txt` (or another ADMIN resets it / restore from backup) |
 | 422 on POST (PowerShell) | Use `cmd /c curl` or test in browser |
 | PDF reports empty | Set `company.name` in Settings |
 
